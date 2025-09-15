@@ -177,15 +177,6 @@ void I_ShutdownGraphics(void)
 
 
 
-//
-// I_StartFrame
-//
-void I_StartFrame (void)
-{
-    // er?
-
-}
-
 static int	lastmousex = 0;
 static int	lastmousey = 0;
 boolean		mousemoved = false;
@@ -337,14 +328,6 @@ void I_StartTic (void)
 
 }
 
-
-//
-// I_UpdateNoBlit
-//
-void I_UpdateNoBlit (void)
-{
-    // what is this?
-}
 
 //
 // I_FinishUpdate
@@ -916,16 +899,6 @@ void I_InitGraphics(void)
 
 }
 
-
-unsigned	exptable[256];
-
-void InitExpand (void)
-{
-    int		i;
-	
-    for (i=0 ; i<256 ; i++)
-	exptable[i] = i | (i<<8) | (i<<16) | (i<<24);
-}
 
 double		exptable2[256*256];
 
