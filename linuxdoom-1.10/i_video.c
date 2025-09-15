@@ -276,7 +276,8 @@ void I_GetEvent(void)
 	while (SDL_PollEvent(&sdl_event)) {
 		switch (sdl_event.type) {
 			case SDL_EVENT_QUIT:
-				//todo
+				sdl_cleanup();
+				I_Quit();
 				break;
 
 			case SDL_EVENT_KEY_DOWN:
