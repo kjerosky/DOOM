@@ -61,6 +61,7 @@ int XShmGetEventBase( Display* dpy ); // problems with g++?
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 SDL_Texture* screen_texture = NULL;
+Uint32 sdl_palette[256];
 
 void sdl_cleanup() {
 	if (screen_texture != NULL) {
@@ -536,17 +537,8 @@ void I_FinishUpdate (void)
 	Uint32* texture_pixels;
 	int texture_pixels_row_length;
 	SDL_LockTexture(screen_texture, NULL, (void**)&texture_pixels, &texture_pixels_row_length);
-	for (int y = 0; y < screen_texture->h; y++) {
-		for (int x = 0; x < screen_texture->w; x++) {
-			int index = y * texture_pixels_row_length / 4 + x;
-			if (x % 3 == 0) {
-				texture_pixels[index] = 0xFF0000FF;
-			} else if (x % 3 == 1) {
-				texture_pixels[index] = 0x00FF00FF;
-			} else {
-				texture_pixels[index] = 0x0000FFFF;
-			}
-		}
+	for (int i = 0; i < SCREENWIDTH * SCREENHEIGHT; i++) {
+		texture_pixels[i] = sdl_palette[screens[0][i]];
 	}
 	SDL_UnlockTexture(screen_texture);
 
@@ -598,6 +590,7 @@ void UploadNewPalette(Colormap cmap, byte *palette)
 	    }
 
 	    // set the X colormap entries
+		const SDL_PixelFormatDetails* pixel_format_details = SDL_GetPixelFormatDetails(screen_texture->format);
 	    for (i=0 ; i<256 ; i++)
 	    {
 		c = gammatable[usegamma][*palette++];
@@ -606,6 +599,8 @@ void UploadNewPalette(Colormap cmap, byte *palette)
 		colors[i].green = (c<<8) + c;
 		c = gammatable[usegamma][*palette++];
 		colors[i].blue = (c<<8) + c;
+
+		sdl_palette[i] = SDL_MapRGB(pixel_format_details, NULL, colors[i].red, colors[i].green, colors[i].blue);
 	    }
 
 	    // store the colors to the current colormap
@@ -729,7 +724,6 @@ void grabsharedmemory(int size)
 
 void I_InitGraphics(void)
 {
-
     char*		displayname;
     char*		d;
     int			n;
@@ -981,6 +975,11 @@ void I_InitGraphics(void)
 	}
 
 	SDL_SetTextureScaleMode(screen_texture, SDL_SCALEMODE_NEAREST);
+
+	const SDL_PixelFormatDetails* pixel_format_details = SDL_GetPixelFormatDetails(screen_texture->format);
+	for (int i = 0; i < 256; i++) {
+		sdl_palette[i] = SDL_MapRGB(pixel_format_details, NULL, 0, 0, 0);
+	}
 }
 
 
