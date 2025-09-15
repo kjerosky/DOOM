@@ -141,11 +141,20 @@ void I_ShutdownGraphics(void)
   sdl_cleanup();
 }
 
-
+int determine_mouse_buttons_state(SDL_MouseButtonFlags flags) {
+	return
+		((flags & SDL_BUTTON_LMASK) ? 1 : 0) |
+		((flags & SDL_BUTTON_MMASK) ? 2 : 0) |
+		((flags & SDL_BUTTON_RMASK) ? 4 : 0)
+	;
+}
 
 void I_GetEvent(void)
 {
 	event_t event;
+
+	float mouse_x;
+	float mouse_y;
 
 	SDL_Event sdl_event;
 	while (SDL_PollEvent(&sdl_event)) {
@@ -166,7 +175,29 @@ void I_GetEvent(void)
 				D_PostEvent(&event);
 				break;
 
-			//todo add mouse events here!!!
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				event.type = ev_mouse;
+				event.data1 = determine_mouse_buttons_state(SDL_GetMouseState(&mouse_x, &mouse_y));
+				event.data2 = 0;
+				event.data3 = 0;
+				D_PostEvent(&event);
+				break;
+
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				event.type = ev_mouse;
+				event.data1 = determine_mouse_buttons_state(SDL_GetMouseState(&mouse_x, &mouse_y));
+				event.data2 = 0;
+				event.data3 = 0;
+				D_PostEvent(&event);
+				break;
+
+			case SDL_EVENT_MOUSE_MOTION:
+				event.type = ev_mouse;
+				event.data1 = determine_mouse_buttons_state(sdl_event.motion.state);
+				event.data2 = sdl_event.motion.xrel;
+				event.data3 = -sdl_event.motion.yrel;
+				D_PostEvent(&event);
+				break;
 		}
 	}
 }
