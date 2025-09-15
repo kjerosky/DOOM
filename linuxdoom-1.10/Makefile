@@ -1,3 +1,6 @@
+# NOTE: I followed some directions here to get things up and running:
+# https://www.deusinmachina.net/p/lets-compile-linux-doom
+
 ################################################################
 #
 # $Id:$
@@ -7,11 +10,13 @@
 CC=  gcc  # gcc or g++
 
 CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM 
-LDFLAGS=-L/usr/X11R6/lib
-LIBS=-lXext -lX11 -lnsl -lm
+# LDFLAGS=-L/usr/X11R6/lib
+INCLUDE_DIRS := -I /opt/homebrew/include
+LIBRARY_DIRS := -L /opt/homebrew/lib
+LIBS=-lXext -lX11 -lm
 
 # subdirectory for objects
-O=linux
+O=build
 
 # not too sophisticated dependency
 OBJS=				\
@@ -80,15 +85,18 @@ OBJS=				\
 all:	 $(O)/linuxxdoom
 
 clean:
-	rm -f *.o *~ *.flc
-	rm -f linux/*
+	rm -rf $(O)
 
 $(O)/linuxxdoom:	$(OBJS) $(O)/i_main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
+	$(INCLUDE_DIRS) $(LIBRARY_DIRS) \
 	-o $(O)/linuxxdoom $(LIBS)
 
-$(O)/%.o:	%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(O):
+	mkdir -p $(O)
+
+$(O)/%.o:	%.c | $(O)
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) $(LIBRARY_DIRS) -c $< -o $@
 
 #############################################################
 #
