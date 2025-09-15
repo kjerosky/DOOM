@@ -13,7 +13,7 @@ CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM
 # LDFLAGS=-L/usr/X11R6/lib
 INCLUDE_DIRS := -I /opt/homebrew/include
 LIBRARY_DIRS := -L /opt/homebrew/lib
-LIBS=-lXext -lX11 -lm -lSDL3
+LIBS=-lm -lSDL3
 
 # subdirectory for objects
 O=build
