@@ -111,6 +111,68 @@ int		doPointerWarp = POINTER_WARP_COUNTDOWN;
 // to use ....
 static int	multiply=1;
 
+int translate_key_scancode(SDL_Scancode scancode) {
+	int translated = KEY_ESCAPE;
+
+	switch (scancode) {
+		case SDL_SCANCODE_LEFT:	translated = KEY_LEFTARROW;	break;
+		case SDL_SCANCODE_RIGHT:	translated = KEY_RIGHTARROW;	break;
+		case SDL_SCANCODE_DOWN:	translated = KEY_DOWNARROW;	break;
+		case SDL_SCANCODE_UP:	translated = KEY_UPARROW;	break;
+		case SDL_SCANCODE_ESCAPE:	translated = KEY_ESCAPE;	break;
+		case SDL_SCANCODE_RETURN:	translated = KEY_ENTER;		break;
+		case SDL_SCANCODE_TAB:	translated = KEY_TAB;		break;
+		case SDL_SCANCODE_F1:	translated = KEY_F1;		break;
+		case SDL_SCANCODE_F2:	translated = KEY_F2;		break;
+		case SDL_SCANCODE_F3:	translated = KEY_F3;		break;
+		case SDL_SCANCODE_F4:	translated = KEY_F4;		break;
+		case SDL_SCANCODE_F5:	translated = KEY_F5;		break;
+		case SDL_SCANCODE_F6:	translated = KEY_F6;		break;
+		case SDL_SCANCODE_F7:	translated = KEY_F7;		break;
+		case SDL_SCANCODE_F8:	translated = KEY_F8;		break;
+		case SDL_SCANCODE_F9:	translated = KEY_F9;		break;
+		case SDL_SCANCODE_F10:	translated = KEY_F10;		break;
+		case SDL_SCANCODE_F11:	translated = KEY_F11;		break;
+		case SDL_SCANCODE_F12:	translated = KEY_F12;		break;
+
+		case SDL_SCANCODE_BACKSPACE:
+		case SDL_SCANCODE_DELETE:
+			translated = KEY_BACKSPACE;
+			break;
+
+		case SDL_SCANCODE_PAUSE:	translated = KEY_PAUSE;		break;
+
+		case SDL_SCANCODE_KP_EQUALS:
+		case SDL_SCANCODE_EQUALS:	translated = KEY_EQUALS;	break;
+
+		case SDL_SCANCODE_KP_MINUS:
+		case SDL_SCANCODE_MINUS:	translated = KEY_MINUS;		break;
+
+		case SDL_SCANCODE_LSHIFT:
+		case SDL_SCANCODE_RSHIFT:
+			translated = KEY_RSHIFT;
+			break;
+
+		case SDL_SCANCODE_LCTRL:
+		case SDL_SCANCODE_RCTRL:
+			translated = KEY_RCTRL;
+			break;
+
+		case SDL_SCANCODE_LALT:
+		case SDL_SCANCODE_RALT:
+			translated = KEY_RALT;
+			break;
+
+		default:
+			translated = SDL_GetKeyFromScancode(scancode, SDL_KMOD_NONE, false);
+			if (translated >= 'A' && translated <= 'Z') {
+				translated = translated - 'A' + 'a';
+			}
+			break;
+	}
+
+	return translated;
+}
 
 //
 //  Translates the key currently in X_event
@@ -208,8 +270,35 @@ boolean		shmFinished;
 
 void I_GetEvent(void)
 {
+	event_t event;
 
-    event_t event;
+	SDL_Event sdl_event;
+	while (SDL_PollEvent(&sdl_event)) {
+		switch (sdl_event.type) {
+			case SDL_EVENT_QUIT:
+				//todo
+				break;
+
+			case SDL_EVENT_KEY_DOWN:
+				event.type = ev_keydown;
+				event.data1 = translate_key_scancode(sdl_event.key.scancode);
+				D_PostEvent(&event);
+				break;
+
+			case SDL_EVENT_KEY_UP:
+				event.type = ev_keyup;
+				event.data1 = translate_key_scancode(sdl_event.key.scancode);
+				D_PostEvent(&event);
+				break;
+
+			//todo add mouse events here!!!
+		}
+	}
+
+	//todo remove this line and everything below in this method!!!
+    XNextEvent(X_display, &X_event);
+	if (doShm && X_event.type == X_shmeventtype) shmFinished = true;
+	return;
 
     // put event-grabbing stuff in here
     XNextEvent(X_display, &X_event);
@@ -526,13 +615,6 @@ void I_FinishUpdate (void)
     }
 
 	// --- SDL display ---
-
-	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_EVENT_QUIT) {
-			//todo
-		}
-	}
 
 	Uint32* texture_pixels;
 	int texture_pixels_row_length;
