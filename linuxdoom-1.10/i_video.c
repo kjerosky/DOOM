@@ -57,6 +57,27 @@ int XShmGetEventBase( Display* dpy ); // problems with g++?
 
 #include "doomdef.h"
 
+#include <SDL3/SDL.h>
+SDL_Window* window = NULL;
+SDL_Renderer* renderer = NULL;
+SDL_Texture* screen_texture = NULL;
+
+void sdl_cleanup() {
+	if (screen_texture != NULL) {
+		SDL_DestroyTexture(screen_texture);
+	}
+
+	if (renderer != NULL) {
+		SDL_DestroyRenderer(renderer);
+	}
+
+	if (window != NULL) {
+		SDL_DestroyWindow(window);
+	}
+
+	SDL_Quit();
+}
+
 #define POINTER_WARP_COUNTDOWN	1
 
 Display*	X_display=0;
@@ -173,6 +194,8 @@ void I_ShutdownGraphics(void)
 
   // Paranoia.
   image->data = NULL;
+
+  sdl_cleanup();
 }
 
 
@@ -501,6 +524,38 @@ void I_FinishUpdate (void)
 
     }
 
+	// --- SDL display ---
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_EVENT_QUIT) {
+			//todo
+		}
+	}
+
+	Uint32* texture_pixels;
+	int texture_pixels_row_length;
+	SDL_LockTexture(screen_texture, NULL, (void**)&texture_pixels, &texture_pixels_row_length);
+	for (int y = 0; y < screen_texture->h; y++) {
+		for (int x = 0; x < screen_texture->w; x++) {
+			int index = y * texture_pixels_row_length / 4 + x;
+			if (x % 3 == 0) {
+				texture_pixels[index] = 0xFF0000FF;
+			} else if (x % 3 == 1) {
+				texture_pixels[index] = 0x00FF00FF;
+			} else {
+				texture_pixels[index] = 0x0000FFFF;
+			}
+		}
+	}
+	SDL_UnlockTexture(screen_texture);
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
+
+	SDL_RenderTexture(renderer, screen_texture, NULL, NULL);
+
+	SDL_RenderPresent(renderer);
 }
 
 
@@ -897,6 +952,35 @@ void I_InitGraphics(void)
     else
 	screens[0] = (unsigned char *) malloc (SCREENWIDTH * SCREENHEIGHT);
 
+	// --- SDL setup ---
+
+	if (!SDL_Init(SDL_INIT_VIDEO)) {
+		fprintf(stderr, "[ERROR] SDL_Init error: %s\n", SDL_GetError());
+		exit(-2);
+	}
+
+	window = SDL_CreateWindow("DOOM", SCREENWIDTH, SCREENHEIGHT, SDL_WINDOW_RESIZABLE);
+	if (window == NULL) {
+		fprintf(stderr, "[ERROR] SDL_CreateWindow error: %s\n", SDL_GetError());
+		sdl_cleanup();
+		exit(-2);
+	}
+
+	renderer = SDL_CreateRenderer(window, NULL);
+	if (renderer == NULL) {
+		fprintf(stderr, "[ERROR] SDL_CreateRenderer error: %s\n", SDL_GetError());
+		sdl_cleanup();
+		exit(-2);
+	}
+
+	screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, SCREENWIDTH, SCREENHEIGHT);
+	if (screen_texture == NULL) {
+		fprintf(stderr, "[ERROR] SDL_CreateTexture error: %s\n", SDL_GetError());
+		sdl_cleanup();
+		exit(-2);
+	}
+
+	SDL_SetTextureScaleMode(screen_texture, SDL_SCALEMODE_NEAREST);
 }
 
 
